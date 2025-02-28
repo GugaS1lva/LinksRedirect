@@ -1,46 +1,38 @@
-import { redirect } from 'next/navigation';
-import getLatestVideoUrl from '../lib/youtube';
-import Link from 'next/link';
+type YouTubeResponse = {
+  items: {
+    id: {
+      videoId: string;
+    }
+  }[];
+};
 
-function getEmbedUrl(videoUrl: string): string {
-  if (videoUrl.includes("youtu.be/")) {
-    return videoUrl.replace("https://youtu.be/", "https://www.youtube.com/embed/");
-  } else if (videoUrl.includes("watch?v=")) {
-    const videoId = videoUrl.split("watch?v=")[1];
-    return `https://www.youtube.com/embed/${videoId}`;
-  } else {
-    return videoUrl;
-  }
-}
+async function getLatestVideoUrl(): Promise<string> {
+  const API_KEY = process.env.YOUTUBE_API_KEY;
+  const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID;
 
-export default async function HomePage() {
-  let videoUrl: string | null = null;
-  try {
-    videoUrl = await getLatestVideoUrl();
-    redirect(videoUrl);
-  } catch (error) {
-    console.error("Deu ruim ao redirecionar o último vídeo:", error);
+  if (!API_KEY || !CHANNEL_ID) {
+    throw new Error('Deu ruim nas tuas variáveis. Confere se estão ativas ou expiradas.');
   }
 
-  return (
-    <main className="flex flex-col h-screen items-center justify-center bg-gray-100 space-y-8 p-4">
-      <Link
-        href={videoUrl || "https://www.youtube.com/@gugas1lvadev"}
-        className="px-8 py-4 bg-red-700 text-white rounded-lg text-xl hover:bg-red-700/90"
-      >
-        YouTube do Guga. ☕👌🏻
-      </Link>
-      {videoUrl && (
-          <iframe
-            className='w-[600px] h-[338px] bg-red-900'
-            width={'100%'}
-            height={'100%'}
-            src={getEmbedUrl(videoUrl)}
-            title="Título do Vídeo"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-      )}
-    </main>
-  );
+  const apiUrl = `https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&channelId=${CHANNEL_ID}&maxResults=1&type=video&key=${API_KEY}`;
+
+  const response = await fetch(apiUrl);
+
+  if (!response.ok) {
+    throw new Error(`Aqui deu ruim ao buscar os dados do YouTube: ${response.statusText}`);
+  }
+
+  const data: YouTubeResponse = await response.json();
+
+  if (!data.items || data.items.length === 0) {
+    throw new Error('Não achei os videos no canal.');
+  }
+
+  const videoId = data.items[0].id.videoId;
+
+  const videoUrl = `https://youtu.be/${videoId}`;
+
+  return videoUrl;
 }
+
+export default getLatestVideoUrl;

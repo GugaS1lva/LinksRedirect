@@ -6,7 +6,7 @@ type YouTubeResponse = {
   }[];
 };
 
-async function getLatestVideoUrl(): Promise<string> {
+export default async function getLatestVideoUrl(): Promise<string> {
   const API_KEY = process.env.YOUTUBE_API_KEY;
   const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID;
 
@@ -29,10 +29,7 @@ async function getLatestVideoUrl(): Promise<string> {
   }
 
   const videoId = data.items[0].id.videoId;
-
   const videoUrl = `https://youtu.be/${videoId}`;
 
   return videoUrl;
 }
-
-export default getLatestVideoUrl;
