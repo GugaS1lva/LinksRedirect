@@ -17,7 +17,7 @@ export default async function HomePage() {
   let videoUrl: string | null = null;
   try {
     videoUrl = await getLatestVideoUrl();
-    // redirect(videoUrl);
+    redirect(videoUrl);
   } catch (error) {
     console.error("Deu ruim ao redirecionar o último vídeo:", error);
   }
